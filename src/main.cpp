@@ -281,6 +281,11 @@ void drawPlayer(){
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
     glViewport(0, 0, width, height);
+
+    if (height == 0) height = 1;
+
+    float ratio = (float)width / (float)height;
+    projectMat = glm::perspective(glm::radians(65.0f), ratio, 0.1f, 100.0f);
 }
 
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
