@@ -1,4 +1,4 @@
-/*
+﻿/*
  * 3-D gear wheels.  This program is in the public domain.
  *
  * Command line options:
@@ -15,7 +15,7 @@
  *   - Slightly modified camera that should work better for stereo viewing
  *
  *
- * Camilla Löwy:
+ * Camilla L철wy:
  *   - Removed FPS counter (this is not a benchmark)
  *   - Added a few comments
  *   - Enabled vsync

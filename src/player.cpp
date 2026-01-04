@@ -1,4 +1,4 @@
-#include "player.h"
+﻿#include "player.h"
 
 Player::Player(){
     setPos(300.0f, 300.0f);

@@ -1,4 +1,4 @@
-}
+﻿}
 
 #elif defined(GLEW_EGL)
 

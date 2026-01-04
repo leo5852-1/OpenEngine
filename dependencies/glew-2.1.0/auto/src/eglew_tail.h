@@ -1,4 +1,4 @@
-/* ------------------------------------------------------------------------ */
+﻿/* ------------------------------------------------------------------------ */
 
 GLEWAPI GLenum GLEWAPIENTRY eglewInit (EGLDisplay display);
 GLEWAPI GLboolean GLEWAPIENTRY eglewIsSupported (const char *name);

@@ -1,4 +1,4 @@
-#ifndef SHADER_HPP
+﻿#ifndef SHADER_HPP
 #define SHADER_HPP
 
 #include <GL/glew.h>
@@ -55,7 +55,7 @@ public:
         GLint compileResult = GL_FALSE;
         int infoLogLength = 0;
 
-        printf("\nCompiling Vertex Shader from \n");
+        printf("\nCompiling Vertex Shader from \"%s\"\n", vertexPath);
         glShaderSource(vShaderID, 1, &vShaderCodePtr, NULL);
         glCompileShader(vShaderID);
         glGetShaderiv(vShaderID, GL_COMPILE_STATUS, &compileResult);
@@ -63,7 +63,7 @@ public:
             glGetShaderiv(vShaderID, GL_INFO_LOG_LENGTH, &infoLogLength);
             vector<char> vShaderErrorMsg(infoLogLength+1);
             glGetShaderInfoLog(vShaderID, infoLogLength, NULL, &vShaderErrorMsg[0]);
-            cout << "Shader Compile Error: " << &vShaderErrorMsg[0] << endl;
+            cout << "Shader Compile Error:\n" << &vShaderErrorMsg[0] << endl;
         }
         else
             printf("Compile success\n");
@@ -72,7 +72,7 @@ public:
         compileResult = GL_FALSE;
         infoLogLength = 0;
 
-        printf("\nCompiling Fragment Shader from \n");
+        printf("\nCompiling Fragment Shader from \"%s\"\n", fragmentPath);
         glShaderSource(fShaderID, 1, &fShaderCodePtr, NULL);
         glCompileShader(fShaderID);
         glGetShaderiv(fShaderID, GL_COMPILE_STATUS, &compileResult);
@@ -80,7 +80,7 @@ public:
             glGetShaderiv(fShaderID, GL_INFO_LOG_LENGTH, &infoLogLength);
             vector<char> fShaderErrorMsg(infoLogLength+1);
             glGetShaderInfoLog(fShaderID, infoLogLength, NULL, &fShaderErrorMsg[0]);
-            cout << "Shader Compile Error: " << &fShaderErrorMsg[0] << endl;
+            cout << "Shader Compile Error:\n" << &fShaderErrorMsg[0] << endl;
         }
         else
             printf("Compile success\n");

@@ -1,7 +1,7 @@
-//========================================================================
+﻿//========================================================================
 // GLFW 3.4 Wayland - www.glfw.org
 //------------------------------------------------------------------------
-// Copyright (c) 2014 Jonas Ådahl <jadahl@gmail.com>
+// Copyright (c) 2014 Jonas 횇dahl <jadahl@gmail.com>
 //
 // This software is provided 'as-is', without any express or implied
 // warranty. In no event will the authors be held liable for any damages
@@ -101,7 +101,7 @@ static int createAnonymousFile(off_t size)
         // We can add this seal before calling posix_fallocate(), as the file
         // is currently zero-sized anyway.
         //
-        // There is also no need to check for the return value, we couldn’t do
+        // There is also no need to check for the return value, we couldn?셳 do
         // anything with it anyway.
         fcntl(fd, F_ADD_SEALS, F_SEAL_SHRINK | F_SEAL_SEAL);
     }
@@ -2526,7 +2526,7 @@ GLFWbool _glfwWindowFocusedWayland(_GLFWwindow* window)
 
 GLFWbool _glfwWindowIconifiedWayland(_GLFWwindow* window)
 {
-    // xdg-shell doesn’t give any way to request whether a surface is
+    // xdg-shell doesn?셳 give any way to request whether a surface is
     // iconified.
     return GLFW_FALSE;
 }

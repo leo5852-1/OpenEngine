@@ -1,4 +1,4 @@
-    }
+﻿    }
     ret = (len == 0);
   }
   return ret;

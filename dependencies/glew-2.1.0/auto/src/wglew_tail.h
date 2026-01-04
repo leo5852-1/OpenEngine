@@ -1,4 +1,4 @@
-/* ------------------------------------------------------------------------- */
+﻿/* ------------------------------------------------------------------------- */
 
 GLEWAPI GLenum GLEWAPIENTRY wglewInit ();
 GLEWAPI GLboolean GLEWAPIENTRY wglewIsSupported (const char *name);

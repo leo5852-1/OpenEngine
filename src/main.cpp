@@ -1,4 +1,4 @@
-// ALWAYS INCLUDE GLEW -> GLFW IN ORDER //
+﻿// ALWAYS INCLUDE GLEW -> GLFW IN ORDER //
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
@@ -30,6 +30,12 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 
+void drawMap2D();
+void drawPlayer();
+
+void quad( int a, int b, int c, int d );
+void colorcube();
+
 //////// Global variables ////////
 // screen size
 const unsigned int SCR_WIDTH = 1280;
@@ -49,44 +55,35 @@ int map[64] =
 1,0,0,0,0,0,0,1,
 1,1,1,1,1,1,1,1
 };
+//for drawing cube
+glm::vec4 vertices[8] = {
+    glm::vec4( -0.5, -0.5,  0.5, 1.0 ),
+    glm::vec4( -0.5,  0.5,  0.5, 1.0 ),
+    glm::vec4(  0.5,  0.5,  0.5, 1.0 ),
+    glm::vec4(  0.5, -0.5,  0.5, 1.0 ),
+    glm::vec4( -0.5, -0.5, -0.5, 1.0 ),
+    glm::vec4( -0.5,  0.5, -0.5, 1.0 ),
+    glm::vec4(  0.5,  0.5, -0.5, 1.0 ),
+    glm::vec4(  0.5, -0.5, -0.5, 1.0 )
+};
+
+// RGBA olors
+glm::vec4 vertex_colors[8] = {
+    glm::vec4( 0.0, 0.0, 0.0, 1.0 ),  // black
+    glm::vec4( 0.0, 1.0, 1.0, 1.0 ),   // cyan
+    glm::vec4( 1.0, 0.0, 1.0, 1.0 ),  // magenta
+    glm::vec4( 1.0, 1.0, 0.0, 1.0 ),  // yellow
+    glm::vec4(1.0, 0.0, 0.0, 1.0 ),  // red
+    glm::vec4( 0.0, 1.0, 0.0, 1.0 ),  // green
+    glm::vec4( 0.0, 0.0, 1.0, 1.0 ),  // blue
+    glm::vec4( 1.0, 1.0, 1.0, 1.0 )
+};  // white
+
+const int NumVertices = 36; //(6 faces)(2 triangles/face)(3 vertices/triangle)
+
+glm::vec4 points[NumVertices];
+glm::vec4 colors[NumVertices];
 //////////////////////////////////
-
-void drawMap2D(){
-    int x,y,xo,yo;
-    for(y=0;y<MAP_ROWS;y++) {
-        for(x=0;x<MAP_COLS;x++) {
-            if(map[ y * MAP_COLS + x]==1) 
-                glColor3f(1,1,1);
-            else 
-                glColor3f(0,0,0);
-            xo = x * MAP_SIZE; yo = y * MAP_SIZE;
-            glBegin(GL_QUADS); 
-            glVertex2i( 0        + xo+1, 0        + yo+1); 
-            glVertex2i( 0        + xo+1, MAP_SIZE + yo-1); 
-            glVertex2i( MAP_SIZE + xo-1, MAP_SIZE + yo-1);  
-            glVertex2i( MAP_SIZE + xo-1, 0        + yo+1); 
-            glEnd();
-        } 
-    }
-}
-
-void drawPlayer(){
-    glPushMatrix();
-
-    glTranslatef(player.x, player.y, 0.0f);
-    glRotatef(player.angle, 0.0f, 0.0f, 1.0f);
-
-    float size = 10.0f; // 반지름 같은 느낌 (총 크기는 20x20)
-    glColor3f(1, 0, 0); // 빨간색
-    glBegin(GL_QUADS);
-        glVertex2f(-size, -size); // 좌측 하단
-        glVertex2f( size, -size); // 우측 하단
-        glVertex2f( size,  size); // 우측 상단
-        glVertex2f(-size,  size); // 좌측 상단
-    glEnd();
-
-    glPopMatrix();
-}
 
 // Main loop function
 void mainLoopEvent(){
@@ -100,16 +97,16 @@ void mainLoopEvent(){
 // Keyboard process function
 void processInput(GLFWwindow* window){
     float speed = player.mvSpeed;
-    // W 키가 눌려있으면 위로
+    // W ?ㅺ? ?뚮젮?덉쑝硫??꾨줈
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS && player.y < BORDER_UP)
         player.y += speed * deltaTime;
-    // S 키가 눌려있으면 아래로
+    // S ?ㅺ? ?뚮젮?덉쑝硫??꾨옒濡?
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS && player.y > BORDER_DOWN)
         player.y -= speed * deltaTime;
-    // A 키가 눌려있으면 왼쪽으로
+    // A ?ㅺ? ?뚮젮?덉쑝硫??쇱そ?쇰줈
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS && player.x > BORDER_LEFT)
         player.x -= speed * deltaTime;
-    // D 키가 눌려있으면 오른쪽으로
+    // D ?ㅺ? ?뚮젮?덉쑝硫??ㅻⅨ履쎌쑝濡?
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS && player.x < BORDER_RIGHT)
         player.x += speed * deltaTime;
     // Q to turn left
@@ -134,6 +131,7 @@ void init(){
     //glfwSetTime(0.0);
     player.setPos(320, 360); 
     
+
     framebuffer_size_callback(NULL, SCR_WIDTH, SCR_HEIGHT);
 }
 
@@ -178,9 +176,9 @@ int main() {
         
         processInput(window);
 
+        glEnable( GL_DEPTH_TEST );  
         glClearColor(0.1f, 0.7f, 0.2f, 0.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
-
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         //mainLoopEvent();
         //player.update(deltaTime);
         drawMap2D();
@@ -195,21 +193,47 @@ int main() {
 }
 ////////////////////////////////////////////////////////////
 
+void drawMap2D(){
+    int x,y,xo,yo;
+    for(y=0;y<MAP_ROWS;y++) {
+        for(x=0;x<MAP_COLS;x++) {
+            if(map[ y * MAP_COLS + x]==1) 
+                glColor3f(1,1,1);
+            else 
+                glColor3f(0,0,0);
+            xo = x * MAP_SIZE; yo = y * MAP_SIZE;
+            glBegin(GL_QUADS); 
+            glVertex2i( 0        + xo+1, 0        + yo+1); 
+            glVertex2i( 0        + xo+1, MAP_SIZE + yo-1); 
+            glVertex2i( MAP_SIZE + xo-1, MAP_SIZE + yo-1);  
+            glVertex2i( MAP_SIZE + xo-1, 0        + yo+1); 
+            glEnd();
+        } 
+    }
+}
+
+void drawPlayer(){
+    glPushMatrix();
+
+    glTranslatef(player.x, player.y, 0.0f);
+    glRotatef(player.angle, 0.0f, 0.0f, 1.0f);
+
+    float size = 10.0f; // 諛섏?由?媛숈? ?먮굦 (珥??ш린??20x20)
+    glColor3f(1, 0, 0); // 鍮④컙??
+    glBegin(GL_QUADS);
+        glVertex2f(-size, -size); // 醫뚯륫 ?섎떒
+        glVertex2f( size, -size); // ?곗륫 ?섎떒
+        glVertex2f( size,  size); // ?곗륫 ?곷떒
+        glVertex2f(-size,  size); // 醫뚯륫 ?곷떒
+    glEnd();
+
+    glPopMatrix();
+}
+
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
-// 1. 뷰포트(그림 그릴 영역) 설정
+// 1. 酉고룷??洹몃┝ 洹몃┫ ?곸뿭) ?ㅼ젙
     glViewport(0, 0, width, height);
-
-    // 2. 투영 행렬(Projection) 초기화 및 설정
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    
-    // 좌표계를 (0, 0) ~ (width, height)로 설정 (z축 범위 넉넉하게 -10 ~ 10)
-    glOrtho(0.0, (double)width, 0.0, (double)height, -10.0, 10.0);
-
-    // 3. 모델뷰 행렬(ModelView) 초기화
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
 }
 
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
@@ -230,3 +254,36 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
     ;
 }
+
+
+//----------------------------------------------------------------------------
+
+// quad generates two triangles for each face and assigns colors
+//    to the vertices
+int Index = 0;
+void
+quad( int a, int b, int c, int d )
+{
+    colors[Index] = vertex_colors[a]; points[Index] = vertices[a]; Index++;
+    colors[Index] = vertex_colors[b]; points[Index] = vertices[b]; Index++;
+    colors[Index] = vertex_colors[c]; points[Index] = vertices[c]; Index++;
+    colors[Index] = vertex_colors[a]; points[Index] = vertices[a]; Index++;
+    colors[Index] = vertex_colors[c]; points[Index] = vertices[c]; Index++;
+    colors[Index] = vertex_colors[d]; points[Index] = vertices[d]; Index++;
+}
+
+//----------------------------------------------------------------------------
+
+// generate 12 triangles: 36 vertices and 36 colors
+void
+colorcube()
+{
+    quad( 1, 0, 3, 2 );
+    quad( 2, 3, 7, 6 );
+    quad( 3, 0, 4, 7 );
+    quad( 6, 5, 1, 2 );
+    quad( 4, 5, 6, 7 );
+    quad( 5, 4, 0, 1 );
+}
+
+//----------------------------------------------------------------------------

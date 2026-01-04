@@ -1,6 +1,6 @@
-//========================================================================
+﻿//========================================================================
 // UTF-8 window title test
-// Copyright (c) Camilla Löwy <elmindreda@glfw.org>
+// Copyright (c) Camilla L철wy <elmindreda@glfw.org>
 //
 // This software is provided 'as-is', without any express or implied
 // warranty. In no event will the authors be held liable for any damages
@@ -49,7 +49,7 @@ int main(void)
     if (!glfwInit())
         exit(EXIT_FAILURE);
 
-    window = glfwCreateWindow(400, 400, "English 日本語 русский язык 官話", NULL, NULL);
+    window = glfwCreateWindow(400, 400, "English ?ζ쑍沃?????克龜橘 ?鈞?克 若섋㈀", NULL, NULL);
     if (!window)
     {
         glfwTerminate();

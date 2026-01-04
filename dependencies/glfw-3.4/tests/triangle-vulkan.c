@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (c) 2015-2016 The Khronos Group Inc.
  * Copyright (c) 2015-2016 Valve Corporation
  * Copyright (c) 2015-2016 LunarG, Inc.
@@ -22,7 +22,7 @@
  * Author: Jon Ashburn <jon@lunarg.com>
  * Author: Piers Daniell <pdaniell@nvidia.com>
  * Author: Gwan-gyeong Mun <elongbug@gmail.com>
- * Porter: Camilla Löwy <elmindreda@glfw.org>
+ * Porter: Camilla L철wy <elmindreda@glfw.org>
  */
 /*
  * Draw a textured triangle with depth testing.  This is written against Intel

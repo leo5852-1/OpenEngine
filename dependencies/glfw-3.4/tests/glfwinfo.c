@@ -1,6 +1,6 @@
-//========================================================================
+﻿//========================================================================
 // Context creation and information tool
-// Copyright (c) Camilla Löwy <elmindreda@glfw.org>
+// Copyright (c) Camilla L철wy <elmindreda@glfw.org>
 //
 // This software is provided 'as-is', without any express or implied
 // warranty. In no event will the authors be held liable for any damages

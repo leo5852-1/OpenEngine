@@ -1,4 +1,4 @@
-#ifndef __wglew_h__
+﻿#ifndef __wglew_h__
 #define __wglew_h__
 #define __WGLEW_H__
 

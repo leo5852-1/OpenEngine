@@ -1,4 +1,4 @@
-//========================================================================
+﻿//========================================================================
 // This is an example program for the GLFW library
 //
 // The program uses a "split window" view, rendering four views of the

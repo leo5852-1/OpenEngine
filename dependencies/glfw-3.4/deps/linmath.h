@@ -1,11 +1,11 @@
-#ifndef LINMATH_H
+﻿#ifndef LINMATH_H
 #define LINMATH_H
 
 #include <string.h>
 #include <math.h>
 #include <string.h>
 
-/* 2021-03-21 Camilla Löwy <elmindreda@elmindreda.org>
+/* 2021-03-21 Camilla L철wy <elmindreda@elmindreda.org>
  * - Replaced double constants with float equivalents
  */
 

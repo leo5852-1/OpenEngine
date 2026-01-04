@@ -1,4 +1,4 @@
-GLboolean GLEWAPIENTRY glewIsSupported (const char* name)
+﻿GLboolean GLEWAPIENTRY glewIsSupported (const char* name)
 {
   const GLubyte* pos = (const GLubyte*)name;
   GLuint len = _glewStrLen(pos);

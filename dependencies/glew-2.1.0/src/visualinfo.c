@@ -1,4 +1,4 @@
-/*
+﻿/*
 ** visualinfo.c
 **
 ** Copyright (C) Nate Robins, 1997

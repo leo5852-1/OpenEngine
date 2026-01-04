@@ -1,4 +1,4 @@
-/* ------------------------------------------------------------------------ */
+﻿/* ------------------------------------------------------------------------ */
 
 GLEWAPI GLenum GLEWAPIENTRY glxewInit ();
 GLEWAPI GLboolean GLEWAPIENTRY glxewIsSupported (const char *name);
