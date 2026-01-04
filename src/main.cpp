@@ -1,7 +1,11 @@
 ﻿// ALWAYS INCLUDE GLEW -> GLFW IN ORDER //
+#define GLM_ENABLE_EXPERIMENTAL
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
+#include "glm/gtc/matrix_transform.hpp"
+#include "glm/gtx/transform.hpp"
+
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -40,6 +44,16 @@ void colorcube();
 // screen size
 const unsigned int SCR_WIDTH = 1280;
 const unsigned int SCR_HEIGHT = 720;
+
+// Shader linked program
+Shader shader;
+// Vertex array object
+GLuint vao;
+
+// Matrix transformation
+GLuint pvmMatrixID;
+glm::mat4 projectMat;
+glm::mat4 viewMat;
 
 Player player;
 float deltaTime = 0.0f; 
@@ -85,56 +99,6 @@ glm::vec4 points[NumVertices];
 glm::vec4 colors[NumVertices];
 //////////////////////////////////
 
-// Main loop function
-void mainLoopEvent(){
-    //player.update(deltaTime);
-    drawMap2D();
-    drawPlayer();
-}
-
-// onKeyEvent() is called only once while pressed
-// processInput() 
-// Keyboard process function
-void processInput(GLFWwindow* window){
-    float speed = player.mvSpeed;
-    // W ?ㅺ? ?뚮젮?덉쑝硫??꾨줈
-    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS && player.y < BORDER_UP)
-        player.y += speed * deltaTime;
-    // S ?ㅺ? ?뚮젮?덉쑝硫??꾨옒濡?
-    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS && player.y > BORDER_DOWN)
-        player.y -= speed * deltaTime;
-    // A ?ㅺ? ?뚮젮?덉쑝硫??쇱そ?쇰줈
-    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS && player.x > BORDER_LEFT)
-        player.x -= speed * deltaTime;
-    // D ?ㅺ? ?뚮젮?덉쑝硫??ㅻⅨ履쎌쑝濡?
-    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS && player.x < BORDER_RIGHT)
-        player.x += speed * deltaTime;
-    // Q to turn left
-    if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
-        player.angle += 180.0f * deltaTime;
-    // E to turn right
-    if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
-        player.angle -= 180.0f * deltaTime;
-}
-
-// Keyboard event function
-void onKeyEvent(GLFWwindow* window, int key, int scancode, int action, int mods) {
-    switch(key){
-        case GLFW_KEY_ESCAPE:
-            glfwSetWindowShouldClose(window, true);
-            break;
-    }
-}
-
-// initialize function
-void init(){
-    //glfwSetTime(0.0);
-    player.setPos(320, 360); 
-    
-
-    framebuffer_size_callback(NULL, SCR_WIDTH, SCR_HEIGHT);
-}
-
 ////////// MAIN function - program entry point //////////
 int main() {
     GLFWwindow* window;
@@ -162,9 +126,11 @@ int main() {
     glfwSetCursorPosCallback(window, mouse_callback);
     glfwSetScrollCallback(window, scroll_callback);
 
-    init();
+    // Load and link shaders into program and use it
+    shader.setup("../src/vShader.glsl", "../src/fShader.glsl");
+    shader.use();
 
-    Shader shader("../src/vShader.glsl", "../src/fShader.glsl");
+    init();
 
     // The main loop
     while(!glfwWindowShouldClose(window))
@@ -176,13 +142,19 @@ int main() {
         
         processInput(window);
 
-        glEnable( GL_DEPTH_TEST );  
         glClearColor(0.1f, 0.7f, 0.2f, 0.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        glm::mat4 model = glm::mat4(1.0f);
+        // 큐브가 보이도록 계속 회전시켜보기
+        model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(0.5f, 1.0f, 0.0f)); 
+        glm::mat4 pvm = projectMat * viewMat * model;
+        glUniformMatrix4fv(pvmMatrixID, 1, GL_FALSE, &pvm[0][0]);
+        
         //mainLoopEvent();
-        //player.update(deltaTime);
-        drawMap2D();
-        drawPlayer();
+        glBindVertexArray(vao);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+        glBindVertexArray(0);
 
         glfwPollEvents();
         glfwSwapBuffers(window);
@@ -192,6 +164,82 @@ int main() {
     return 0;
 }
 ////////////////////////////////////////////////////////////
+
+// initialize function
+void init(){
+    //glfwSetTime(0.0);
+    
+    colorcube();
+    
+    glGenVertexArrays(1, &vao);
+    glBindVertexArray(vao);
+
+    GLuint vbo;
+    glGenBuffers(1, &vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    
+    glBufferData(GL_ARRAY_BUFFER, sizeof(points) + sizeof(colors), NULL, GL_STATIC_DRAW);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(points), points);
+    glBufferSubData(GL_ARRAY_BUFFER, sizeof(points), sizeof(colors), colors);    
+
+    GLuint vPositon = glGetAttribLocation(shader.programID, "vPosition");
+    glEnableVertexAttribArray(vPositon);
+    glVertexAttribPointer(vPositon, 4, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0);
+
+    GLuint vColor = glGetAttribLocation(shader.programID, "vColor");
+    glEnableVertexAttribArray(vColor);
+    glVertexAttribPointer(vColor, 4, GL_FLOAT, GL_FALSE, 0, ((GLvoid*)sizeof(points)) );
+
+    pvmMatrixID = glGetUniformLocation(shader.programID, "mPVM");
+    projectMat = glm::perspective(glm::radians(65.0f), 1.0f, 0.1f, 100.0f);
+    viewMat = glm::lookAt(glm::vec3(0, 0, 2), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
+
+    framebuffer_size_callback(NULL, SCR_WIDTH, SCR_HEIGHT);
+
+    glEnable(GL_DEPTH_TEST);
+    glClearColor(0.1f, 0.7f, 0.2f, 0.0f);
+}
+
+// Main loop function
+void mainLoopEvent(){
+    //player.update(deltaTime);
+    drawMap2D();
+    drawPlayer();
+}
+
+// onKeyEvent() is called only once while pressed
+// processInput() 
+// Keyboard process function
+void processInput(GLFWwindow* window){
+    float speed = player.mvSpeed;
+    // W
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS && player.y < BORDER_UP)
+        player.y += speed * deltaTime;
+    // S
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS && player.y > BORDER_DOWN)
+        player.y -= speed * deltaTime;
+    // A
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS && player.x > BORDER_LEFT)
+        player.x -= speed * deltaTime;
+    // D
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS && player.x < BORDER_RIGHT)
+        player.x += speed * deltaTime;
+    // Q
+    if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
+        player.angle += 180.0f * deltaTime;
+    // E
+    if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
+        player.angle -= 180.0f * deltaTime;
+}
+
+// Keyboard event function
+void onKeyEvent(GLFWwindow* window, int key, int scancode, int action, int mods) {
+    switch(key){
+        case GLFW_KEY_ESCAPE:
+            glfwSetWindowShouldClose(window, true);
+            break;
+    }
+}
 
 void drawMap2D(){
     int x,y,xo,yo;
@@ -232,7 +280,6 @@ void drawPlayer(){
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
-// 1. 酉고룷??洹몃┝ 洹몃┫ ?곸뿭) ?ㅼ젙
     glViewport(0, 0, width, height);
 }
 

@@ -15,7 +15,10 @@ class Shader
 {
 public:
     unsigned int programID;
-    Shader(const char* vertexPath, const char* fragmentPath){
+    Shader(){}
+    Shader(const char* vertexPath, const char* fragmentPath){this->setup(vertexPath, fragmentPath);}
+    
+    void setup(const char* vertexPath, const char* fragmentPath){
         // 1. Create shader object
         GLuint vShaderID = glCreateShader(GL_VERTEX_SHADER);
         GLuint fShaderID = glCreateShader(GL_FRAGMENT_SHADER);
@@ -104,7 +107,7 @@ public:
         glDeleteShader(vShaderID);
         glDeleteShader(fShaderID);
     }
-    
+
     // Use the linked program
     void use(){
         glUseProgram(programID);
