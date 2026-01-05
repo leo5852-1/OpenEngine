@@ -4,6 +4,7 @@
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 #include "glm/gtc/matrix_transform.hpp"
+#include <glm/gtx/rotate_vector.hpp>
 #include "glm/gtx/transform.hpp"
 
 #include <iostream>
@@ -21,6 +22,8 @@
 #define MAP_ROWS 8
 #define MAP_COLS 8
 #define MAP_SIZE 64
+
+#define CAMERA_SPEED 2.5f
 
 using namespace std;
 
@@ -49,6 +52,11 @@ const unsigned int SCR_HEIGHT = 720;
 Shader shader;
 // Vertex array object
 GLuint vao;
+
+// Camera matrices
+glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
+glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
+glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
 
 // Matrix transformation
 GLuint pvmMatrixID;
@@ -139,15 +147,19 @@ int main() {
         float currentFrame = (float)glfwGetTime();
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
-        
-        processInput(window);
 
+        //proccess inputs
+        processInput(window);
+        // clear the frame and buffer
         glClearColor(0.1f, 0.7f, 0.2f, 0.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+        // calculate view matrix
+        viewMat = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
+        // rotate cube
         glm::mat4 model = glm::mat4(1.0f);
-        // 큐브가 보이도록 계속 회전시켜보기
         model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(0.5f, 1.0f, 0.0f)); 
+        
         glm::mat4 pvm = projectMat * viewMat * model;
         glUniformMatrix4fv(pvmMatrixID, 1, GL_FALSE, &pvm[0][0]);
         
@@ -192,7 +204,7 @@ void init(){
 
     pvmMatrixID = glGetUniformLocation(shader.programID, "mPVM");
     projectMat = glm::perspective(glm::radians(65.0f), 1.0f, 0.1f, 100.0f);
-    viewMat = glm::lookAt(glm::vec3(0, 0, 2), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
+    viewMat = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
 
     framebuffer_size_callback(NULL, SCR_WIDTH, SCR_HEIGHT);
 
@@ -211,25 +223,26 @@ void mainLoopEvent(){
 // processInput() 
 // Keyboard process function
 void processInput(GLFWwindow* window){
-    float speed = player.mvSpeed;
+    float cameraSpeed = CAMERA_SPEED * deltaTime;
+    float rotateSpeed = CAMERA_SPEED * deltaTime;
     // W
-    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS && player.y < BORDER_UP)
-        player.y += speed * deltaTime;
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+        cameraPos += cameraSpeed * cameraFront;
     // S
-    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS && player.y > BORDER_DOWN)
-        player.y -= speed * deltaTime;
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+        cameraPos -= cameraSpeed * cameraFront;
     // A
-    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS && player.x > BORDER_LEFT)
-        player.x -= speed * deltaTime;
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+        cameraPos -= cameraSpeed * glm::normalize(glm::cross(cameraFront, cameraUp));
     // D
-    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS && player.x < BORDER_RIGHT)
-        player.x += speed * deltaTime;
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+        cameraPos += cameraSpeed * glm::normalize(glm::cross(cameraFront, cameraUp));
     // Q
     if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
-        player.angle += 180.0f * deltaTime;
+        cameraFront = glm::rotate(cameraFront, cameraSpeed, cameraUp);
     // E
     if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
-        player.angle -= 180.0f * deltaTime;
+        cameraFront = glm::rotate(cameraFront, -cameraSpeed, cameraUp);
 }
 
 // Keyboard event function
