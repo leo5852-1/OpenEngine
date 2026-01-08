@@ -13,6 +13,7 @@
 
 #include <player.h>
 #include <shader.h>
+#include <cube.h>
 
 #define BORDER_LEFT 0
 #define BORDER_RIGHT 1280
@@ -23,6 +24,7 @@
 #define MAP_COLS 8
 #define MAP_SIZE 64
 
+#define CLEAR_COLOR 0.31f, 0.73f, 0.87f, 0.0f
 #define CAMERA_SPEED 2.5f
 
 using namespace std;
@@ -59,7 +61,8 @@ glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
 glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
 
 // Matrix transformation
-GLuint pvmMatrixID;
+//GLuint pvmMatrixID; //removed to calculate in shader
+glm::mat4 modelMat;
 glm::mat4 projectMat;
 glm::mat4 viewMat;
 
@@ -77,34 +80,6 @@ int map[64] =
 1,0,0,0,0,0,0,1,
 1,1,1,1,1,1,1,1
 };
-//for drawing cube
-glm::vec4 vertices[8] = {
-    glm::vec4( -0.5, -0.5,  0.5, 1.0 ),
-    glm::vec4( -0.5,  0.5,  0.5, 1.0 ),
-    glm::vec4(  0.5,  0.5,  0.5, 1.0 ),
-    glm::vec4(  0.5, -0.5,  0.5, 1.0 ),
-    glm::vec4( -0.5, -0.5, -0.5, 1.0 ),
-    glm::vec4( -0.5,  0.5, -0.5, 1.0 ),
-    glm::vec4(  0.5,  0.5, -0.5, 1.0 ),
-    glm::vec4(  0.5, -0.5, -0.5, 1.0 )
-};
-
-// RGBA olors
-glm::vec4 vertex_colors[8] = {
-    glm::vec4( 0.0, 0.0, 0.0, 1.0 ),  // black
-    glm::vec4( 0.0, 1.0, 1.0, 1.0 ),   // cyan
-    glm::vec4( 1.0, 0.0, 1.0, 1.0 ),  // magenta
-    glm::vec4( 1.0, 1.0, 0.0, 1.0 ),  // yellow
-    glm::vec4(1.0, 0.0, 0.0, 1.0 ),  // red
-    glm::vec4( 0.0, 1.0, 0.0, 1.0 ),  // green
-    glm::vec4( 0.0, 0.0, 1.0, 1.0 ),  // blue
-    glm::vec4( 1.0, 1.0, 1.0, 1.0 )
-};  // white
-
-const int NumVertices = 36; //(6 faces)(2 triangles/face)(3 vertices/triangle)
-
-glm::vec4 points[NumVertices];
-glm::vec4 colors[NumVertices];
 //////////////////////////////////
 
 ////////// MAIN function - program entry point //////////
@@ -140,6 +115,10 @@ int main() {
 
     init();
 
+    Cube cube1(shader.programID);
+    Cube cube2(shader.programID);
+    cube2.translate(glm::vec3(1.5f, 0.0f, 0.0f));
+
     // The main loop
     while(!glfwWindowShouldClose(window))
     {
@@ -151,22 +130,26 @@ int main() {
         //proccess inputs
         processInput(window);
         // clear the frame and buffer
-        glClearColor(0.1f, 0.7f, 0.2f, 0.0f);
+        glClearColor(CLEAR_COLOR);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // calculate view matrix
         viewMat = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
         // rotate cube
-        glm::mat4 model = glm::mat4(1.0f);
-        model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(0.5f, 1.0f, 0.0f)); 
+        modelMat = glm::mat4(1.0f);
+        modelMat = glm::rotate(modelMat, (float)glfwGetTime(), glm::vec3(0.5f, 1.0f, 0.0f)); 
         
-        glm::mat4 pvm = projectMat * viewMat * model;
-        glUniformMatrix4fv(pvmMatrixID, 1, GL_FALSE, &pvm[0][0]);
-        
+        // set MVP matrices
+        glUniformMatrix4fv(glGetUniformLocation(shader.programID, "model"), 1, GL_FALSE, &modelMat[0][0]);
+        glUniformMatrix4fv(glGetUniformLocation(shader.programID, "view"), 1, GL_FALSE, &viewMat[0][0]);
+        glUniformMatrix4fv(glGetUniformLocation(shader.programID, "projection"), 1, GL_FALSE, &projectMat[0][0]);
+
         //mainLoopEvent();
-        glBindVertexArray(vao);
-        glDrawArrays(GL_TRIANGLES, 0, 36);
-        glBindVertexArray(0);
+        cube1.rotate(glm::vec3(0.5f, 1.0f, 0.0f), deltaTime);
+        cube1.draw();
+        
+        cube2.rotate(glm::vec3(0.5f, 1.0f, 0.0f), deltaTime);
+        cube2.draw();
 
         glfwPollEvents();
         glfwSwapBuffers(window);
@@ -180,36 +163,16 @@ int main() {
 // initialize function
 void init(){
     //glfwSetTime(0.0);
-    
-    colorcube();
-    
-    glGenVertexArrays(1, &vao);
-    glBindVertexArray(vao);
 
-    GLuint vbo;
-    glGenBuffers(1, &vbo);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    
-    glBufferData(GL_ARRAY_BUFFER, sizeof(points) + sizeof(colors), NULL, GL_STATIC_DRAW);
-    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(points), points);
-    glBufferSubData(GL_ARRAY_BUFFER, sizeof(points), sizeof(colors), colors);    
-
-    GLuint vPositon = glGetAttribLocation(shader.programID, "vPosition");
-    glEnableVertexAttribArray(vPositon);
-    glVertexAttribPointer(vPositon, 4, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0);
-
-    GLuint vColor = glGetAttribLocation(shader.programID, "vColor");
-    glEnableVertexAttribArray(vColor);
-    glVertexAttribPointer(vColor, 4, GL_FLOAT, GL_FALSE, 0, ((GLvoid*)sizeof(points)) );
-
-    pvmMatrixID = glGetUniformLocation(shader.programID, "mPVM");
+    // initialize MVP matrices
     projectMat = glm::perspective(glm::radians(65.0f), 1.0f, 0.1f, 100.0f);
     viewMat = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
-
+    modelMat = glm::mat4(1.0f);
+    
     framebuffer_size_callback(NULL, SCR_WIDTH, SCR_HEIGHT);
 
     glEnable(GL_DEPTH_TEST);
-    glClearColor(0.1f, 0.7f, 0.2f, 0.0f);
+    glClearColor(CLEAR_COLOR);
 }
 
 // Main loop function
@@ -320,35 +283,5 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
     ;
 }
 
-
-//----------------------------------------------------------------------------
-
-// quad generates two triangles for each face and assigns colors
-//    to the vertices
-int Index = 0;
-void
-quad( int a, int b, int c, int d )
-{
-    colors[Index] = vertex_colors[a]; points[Index] = vertices[a]; Index++;
-    colors[Index] = vertex_colors[b]; points[Index] = vertices[b]; Index++;
-    colors[Index] = vertex_colors[c]; points[Index] = vertices[c]; Index++;
-    colors[Index] = vertex_colors[a]; points[Index] = vertices[a]; Index++;
-    colors[Index] = vertex_colors[c]; points[Index] = vertices[c]; Index++;
-    colors[Index] = vertex_colors[d]; points[Index] = vertices[d]; Index++;
-}
-
-//----------------------------------------------------------------------------
-
-// generate 12 triangles: 36 vertices and 36 colors
-void
-colorcube()
-{
-    quad( 1, 0, 3, 2 );
-    quad( 2, 3, 7, 6 );
-    quad( 3, 0, 4, 7 );
-    quad( 6, 5, 1, 2 );
-    quad( 4, 5, 6, 7 );
-    quad( 5, 4, 0, 1 );
-}
 
 //----------------------------------------------------------------------------

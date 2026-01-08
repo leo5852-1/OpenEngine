@@ -34,7 +34,9 @@ add_executable (OpenEngine
   dependencies/glew-2.1.0/src/glew.c
   src/main.cpp
   src/player.cpp
+  src/cube.cpp
   include/player.h
+  include/cube.h
   )
 
 # link libraries
