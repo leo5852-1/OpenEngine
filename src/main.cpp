@@ -14,6 +14,7 @@
 #include <player.h>
 #include <shader.h>
 #include <cube.h>
+#include <plane.h>
 
 #define BORDER_LEFT 0
 #define BORDER_RIGHT 1280
@@ -119,6 +120,10 @@ int main() {
     Cube cube2(shader.programID);
     cube2.translate(glm::vec3(1.5f, 0.0f, 0.0f));
 
+    Plane floor(shader.programID);
+    floor.scale(glm::vec3(30.0f, 1.0f, 30.0f));
+    floor.translate(glm::vec3(0.0f, -1.0f, 0.0f));
+
     // The main loop
     while(!glfwWindowShouldClose(window))
     {
@@ -150,6 +155,8 @@ int main() {
         
         cube2.rotate(glm::vec3(0.5f, 1.0f, 0.0f), deltaTime);
         cube2.draw();
+
+        floor.draw();
 
         glfwPollEvents();
         glfwSwapBuffers(window);

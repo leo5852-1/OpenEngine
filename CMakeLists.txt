@@ -35,8 +35,11 @@ add_executable (OpenEngine
   src/main.cpp
   src/player.cpp
   src/cube.cpp
+  src/plane.cpp
+
   include/player.h
   include/cube.h
+  include/plane.h
   )
 
 # link libraries
