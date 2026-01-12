@@ -40,8 +40,6 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 
-void drawMap2D();
-void drawPlayer();
 
 void quad( int a, int b, int c, int d );
 void colorcube();
@@ -56,31 +54,16 @@ Shader shader;
 // Vertex array object
 GLuint vao;
 
-// Camera matrices
-glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
-glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
-glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
-
+// Player
+Player player;
 // Matrix transformation
 //GLuint pvmMatrixID; //removed to calculate in shader
 glm::mat4 modelMat;
 glm::mat4 projectMat;
 glm::mat4 viewMat;
 
-Player player;
 float deltaTime = 0.0f; 
 float lastFrame = 0.0f;
-int map[64] = 
-{
-1,1,1,1,1,1,1,1,
-1,0,1,0,0,0,0,1,
-1,0,1,0,0,0,0,1,
-1,0,1,0,0,0,0,1,
-1,0,0,0,0,0,0,1,
-1,0,0,0,0,1,0,1,
-1,0,0,0,0,0,0,1,
-1,1,1,1,1,1,1,1
-};
 //////////////////////////////////
 
 ////////// MAIN function - program entry point //////////
@@ -139,7 +122,7 @@ int main() {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // calculate view matrix
-        viewMat = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
+        viewMat = glm::lookAt(player.cameraPos, player.cameraPos + player.cameraFront, player.cameraUp);
         // rotate cube
         modelMat = glm::mat4(1.0f);
         modelMat = glm::rotate(modelMat, (float)glfwGetTime(), glm::vec3(0.5f, 1.0f, 0.0f)); 
@@ -150,6 +133,8 @@ int main() {
         glUniformMatrix4fv(glGetUniformLocation(shader.programID, "projection"), 1, GL_FALSE, &projectMat[0][0]);
 
         //mainLoopEvent();
+        player.update(deltaTime);
+
         cube1.rotate(glm::vec3(0.5f, 1.0f, 0.0f), deltaTime);
         cube1.draw();
         
@@ -173,7 +158,7 @@ void init(){
 
     // initialize MVP matrices
     projectMat = glm::perspective(glm::radians(65.0f), 1.0f, 0.1f, 100.0f);
-    viewMat = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
+    viewMat = glm::lookAt(player.cameraPos, player.cameraPos + player.cameraFront, player.cameraUp);
     modelMat = glm::mat4(1.0f);
     
     framebuffer_size_callback(NULL, SCR_WIDTH, SCR_HEIGHT);
@@ -185,34 +170,40 @@ void init(){
 // Main loop function
 void mainLoopEvent(){
     //player.update(deltaTime);
-    drawMap2D();
-    drawPlayer();
 }
 
 // onKeyEvent() is called only once while pressed
 // processInput() 
 // Keyboard process function
 void processInput(GLFWwindow* window){
-    float cameraSpeed = CAMERA_SPEED * deltaTime;
-    float rotateSpeed = CAMERA_SPEED * deltaTime;
+    float cameraSpeed = player.moveSpeed * deltaTime;
+    float rotateSpeed = player.rotateSpeed * deltaTime;
+    
+    glm::vec3 flatFront = player.cameraFront;
+    flatFront.y = 0.0f; 
+    flatFront = glm::normalize(flatFront);
+
     // W
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-        cameraPos += cameraSpeed * cameraFront;
+        player.cameraPos += cameraSpeed * flatFront;
     // S
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-        cameraPos -= cameraSpeed * cameraFront;
+        player.cameraPos -= cameraSpeed * flatFront;
     // A
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-        cameraPos -= cameraSpeed * glm::normalize(glm::cross(cameraFront, cameraUp));
+        player.cameraPos -= cameraSpeed * glm::normalize(glm::cross(flatFront, player.cameraUp));
     // D
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-        cameraPos += cameraSpeed * glm::normalize(glm::cross(cameraFront, cameraUp));
+        player.cameraPos += cameraSpeed * glm::normalize(glm::cross(flatFront, player.cameraUp));
     // Q
     if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
-        cameraFront = glm::rotate(cameraFront, cameraSpeed, cameraUp);
+        player.cameraFront = glm::rotate(flatFront, rotateSpeed, player.cameraUp);
     // E
     if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
-        cameraFront = glm::rotate(cameraFront, -cameraSpeed, cameraUp);
+       player. cameraFront = glm::rotate(flatFront, -rotateSpeed, player.cameraUp);
+    // SPACE-JUMP
+    if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
+        player.jump();   
 }
 
 // Keyboard event function
@@ -222,43 +213,6 @@ void onKeyEvent(GLFWwindow* window, int key, int scancode, int action, int mods)
             glfwSetWindowShouldClose(window, true);
             break;
     }
-}
-
-void drawMap2D(){
-    int x,y,xo,yo;
-    for(y=0;y<MAP_ROWS;y++) {
-        for(x=0;x<MAP_COLS;x++) {
-            if(map[ y * MAP_COLS + x]==1) 
-                glColor3f(1,1,1);
-            else 
-                glColor3f(0,0,0);
-            xo = x * MAP_SIZE; yo = y * MAP_SIZE;
-            glBegin(GL_QUADS); 
-            glVertex2i( 0        + xo+1, 0        + yo+1); 
-            glVertex2i( 0        + xo+1, MAP_SIZE + yo-1); 
-            glVertex2i( MAP_SIZE + xo-1, MAP_SIZE + yo-1);  
-            glVertex2i( MAP_SIZE + xo-1, 0        + yo+1); 
-            glEnd();
-        } 
-    }
-}
-
-void drawPlayer(){
-    glPushMatrix();
-
-    glTranslatef(player.x, player.y, 0.0f);
-    glRotatef(player.angle, 0.0f, 0.0f, 1.0f);
-
-    float size = 10.0f; // 諛섏?由?媛숈? ?먮굦 (珥??ш린??20x20)
-    glColor3f(1, 0, 0); // 鍮④컙??
-    glBegin(GL_QUADS);
-        glVertex2f(-size, -size); // 醫뚯륫 ?섎떒
-        glVertex2f( size, -size); // ?곗륫 ?섎떒
-        glVertex2f( size,  size); // ?곗륫 ?곷떒
-        glVertex2f(-size,  size); // 醫뚯륫 ?곷떒
-    glEnd();
-
-    glPopMatrix();
 }
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
