@@ -40,6 +40,7 @@ add_executable (OpenEngine
   include/player.h
   include/cube.h
   include/plane.h
+  include/aabb.h
   )
 
 # link libraries

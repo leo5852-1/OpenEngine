@@ -2,6 +2,8 @@
 #include <iostream>
 #include <vector>
 #include <glm/glm.hpp>
+#include <aabb.h>
+#include "plane.h"
 
 using std::vector;
 
@@ -11,7 +13,7 @@ public:
     Player(glm::vec3);
 
     void setPos(glm::vec3);
-    void update(float dt);
+    void update(float dt, const std::vector<Plane>& obstacles);
     void jump();
     
     glm::vec3 cameraPos = glm::vec3(0.0f, 1.0f, 3.0f);

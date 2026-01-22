@@ -54,6 +54,8 @@ Shader shader;
 // Vertex array object
 GLuint vao;
 
+// List of world objects
+static std::vector<Plane> worldObjects;
 // Player
 Player player;
 // Matrix transformation
@@ -100,13 +102,15 @@ int main() {
     init();
 
     Cube cube1(shader.programID);
+    
     Cube cube2(shader.programID);
     cube2.translate(glm::vec3(1.5f, 0.0f, 0.0f));
 
     Plane floor(shader.programID);
     floor.scale(glm::vec3(30.0f, 1.0f, 30.0f));
     floor.translate(glm::vec3(0.0f, -1.0f, 0.0f));
-
+    worldObjects.push_back(floor);
+    
     // The main loop
     while(!glfwWindowShouldClose(window))
     {
@@ -133,7 +137,7 @@ int main() {
         glUniformMatrix4fv(glGetUniformLocation(shader.programID, "projection"), 1, GL_FALSE, &projectMat[0][0]);
 
         //mainLoopEvent();
-        player.update(deltaTime);
+        player.update(deltaTime, worldObjects);
 
         cube1.rotate(glm::vec3(0.5f, 1.0f, 0.0f), deltaTime);
         cube1.draw();

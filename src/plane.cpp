@@ -12,6 +12,7 @@ glm::vec4 planeVertices[4] = {
     */
 };
 
+//TODO: substitute programID param
 Plane::Plane(unsigned int programID){
     this->modelLoc = glGetUniformLocation(programID, "model");
     
@@ -47,10 +48,12 @@ void Plane::draw(){
 
 void Plane::translate(glm::vec3 matrix) {
     this->modelMatrix = glm::translate(this->modelMatrix, matrix);
+    this->position += matrix;
 }
 
 void Plane::scale(glm::vec3 matrix) {
     this->modelMatrix = glm::scale(this->modelMatrix, matrix);
+    this->scaleSize *= matrix;
 }
 
 void Plane::colorPlane(){
@@ -64,4 +67,10 @@ void Plane::colorPlane(){
     points[index] = planeVertices[0]; index++;
     points[index] = planeVertices[3]; index++;
     points[index] = planeVertices[2]; index++;
+}
+
+AABB Plane::getAABB(){
+    glm::vec3 min = position - (scaleSize / 2.0f);
+    glm::vec3 max = position + (scaleSize / 2.0f);
+    return { min, max };
 }
