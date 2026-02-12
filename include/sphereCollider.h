@@ -1,0 +1,6 @@
+#ifndef SPHERECOLLIDER_HPP
+#define SPHERECOLLIDER_HPP
+
+
+
+#endif

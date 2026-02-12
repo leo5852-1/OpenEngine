@@ -36,11 +36,17 @@ add_executable (OpenEngine
   src/player.cpp
   src/cube.cpp
   src/plane.cpp
+  src/collisionSystem.cpp
 
   include/player.h
   include/cube.h
   include/plane.h
   include/aabb.h
+  include/collider.h
+  include/boxCollider.h
+  include/sphereCollider.h
+  include/collisionSystem.h
+  include/gameObject.h
   )
 
 # link libraries
