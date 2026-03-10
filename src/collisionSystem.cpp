@@ -57,7 +57,9 @@ std::optional<glm::vec3> CollisionSystem::getBoxVSBoxMTV(BoxCollider& a, glm::ve
     float oz = std::min(aabb_a.max.z, aabb_b.max.z) - std::max(aabb_a.min.z, aabb_b.min.z);
 
     // b -> a direction
-    glm::vec3 dir = posA - posB;
+    glm::vec3 centerA = posA + a.offset;
+    glm::vec3 centerB = posB + b.offset;
+    glm::vec3 dir = centerA - centerB;
 
     // return the MTV
     if (ox <= oy && ox <= oz)
