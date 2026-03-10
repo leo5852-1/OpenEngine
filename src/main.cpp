@@ -15,6 +15,7 @@
 #include <shader.h>
 #include <cube.h>
 #include <plane.h>
+#include <collisionSystem.h>
 
 #define BORDER_LEFT 0
 #define BORDER_RIGHT 1280
@@ -53,11 +54,10 @@ const unsigned int SCR_HEIGHT = 720;
 Shader shader;
 // Vertex array object
 GLuint vao;
-
-// List of world objects
-static std::vector<Plane> worldObjects;
 // Player
 Player player;
+// Collision system
+CollisionSystem collisionSystem;
 // Matrix transformation
 //GLuint pvmMatrixID; //removed to calculate in shader
 glm::mat4 modelMat;
@@ -101,6 +101,7 @@ int main() {
 
     init();
 
+    // Generate Game Objects
     Cube cube1(shader.programID);
     
     Cube cube2(shader.programID);
@@ -109,8 +110,12 @@ int main() {
     Plane floor(shader.programID);
     floor.scale(glm::vec3(30.0f, 1.0f, 30.0f));
     floor.translate(glm::vec3(0.0f, -1.0f, 0.0f));
-    worldObjects.push_back(floor);
     
+    collisionSystem.registerObject(&player);
+    collisionSystem.registerObject(&floor);
+    collisionSystem.registerObject(&cube1);
+    collisionSystem.registerObject(&cube2);
+
     // The main loop
     while(!glfwWindowShouldClose(window))
     {
@@ -119,26 +124,29 @@ int main() {
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
 
-        //proccess inputs
+        // 1. proccess inputs
         processInput(window);
-        // clear the frame and buffer
+        
+        // 2. calculate physics and collisions
+        player.update(deltaTime);
+        collisionSystem.update();
+        
+        // 3. calculate view matrix
+        viewMat = glm::lookAt(player.position + player.cameraOffset, 
+            player.position + player.cameraOffset + player.cameraFront, 
+            player.cameraUp);
+            
+        // 4. clear the frame and buffer
         glClearColor(CLEAR_COLOR);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-        // calculate view matrix
-        viewMat = glm::lookAt(player.cameraPos, player.cameraPos + player.cameraFront, player.cameraUp);
-        // rotate cube
-        modelMat = glm::mat4(1.0f);
-        modelMat = glm::rotate(modelMat, (float)glfwGetTime(), glm::vec3(0.5f, 1.0f, 0.0f)); 
-        
-        // set MVP matrices
+            
+        // 5. set MVP matrices
+        // TODO: use fixed location for MVP uniforms and delete these lines
         glUniformMatrix4fv(glGetUniformLocation(shader.programID, "model"), 1, GL_FALSE, &modelMat[0][0]);
         glUniformMatrix4fv(glGetUniformLocation(shader.programID, "view"), 1, GL_FALSE, &viewMat[0][0]);
         glUniformMatrix4fv(glGetUniformLocation(shader.programID, "projection"), 1, GL_FALSE, &projectMat[0][0]);
 
-        //mainLoopEvent();
-        player.update(deltaTime, worldObjects);
-
+        // 6. the actual drawing part
         cube1.rotate(glm::vec3(0.5f, 1.0f, 0.0f), deltaTime);
         cube1.draw();
         
@@ -162,7 +170,9 @@ void init(){
 
     // initialize MVP matrices
     projectMat = glm::perspective(glm::radians(65.0f), 1.0f, 0.1f, 100.0f);
-    viewMat = glm::lookAt(player.cameraPos, player.cameraPos + player.cameraFront, player.cameraUp);
+    viewMat = glm::lookAt(player.position + player.cameraOffset, 
+            player.position + player.cameraOffset + player.cameraFront, 
+            player.cameraUp);
     modelMat = glm::mat4(1.0f);
     
     framebuffer_size_callback(NULL, SCR_WIDTH, SCR_HEIGHT);
@@ -189,16 +199,16 @@ void processInput(GLFWwindow* window){
 
     // W
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-        player.cameraPos += cameraSpeed * flatFront;
+        player.position += cameraSpeed * flatFront;
     // S
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-        player.cameraPos -= cameraSpeed * flatFront;
+        player.position -= cameraSpeed * flatFront;
     // A
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-        player.cameraPos -= cameraSpeed * glm::normalize(glm::cross(flatFront, player.cameraUp));
+        player.position -= cameraSpeed * glm::normalize(glm::cross(flatFront, player.cameraUp));
     // D
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-        player.cameraPos += cameraSpeed * glm::normalize(glm::cross(flatFront, player.cameraUp));
+        player.position += cameraSpeed * glm::normalize(glm::cross(flatFront, player.cameraUp));
     // Q
     if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
         player.cameraFront = glm::rotate(flatFront, rotateSpeed, player.cameraUp);

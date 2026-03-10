@@ -3,11 +3,11 @@
 
 #include <GL/glew.h>
 #include <glm/glm.hpp>
-#include <iostream>
 #include <glm/gtc/matrix_transform.hpp>
-#include <aabb.h>
+#include "gameObject.h"
+#include "boxCollider.h"
 
-class Plane {
+class Plane : public GameObject{
 public:
     Plane(unsigned int);
     void draw();
@@ -16,13 +16,11 @@ public:
     void translate(glm::vec3);
     void scale(glm::vec3);
     void rotate(glm::vec3, float);
-    AABB getAABB();
 
     glm::vec4 points[6]; // (2 triangles)(3 vertices/triangle)
     glm::vec4 colors[6];
     
     glm::mat4 modelMatrix = glm::mat4(1.0f); // initial model matrix
-    glm::vec3 position = glm::vec3(0.0f);
     glm::vec3 scaleSize = glm::vec3(1.0f);
 
     //TODO: change to use layout number set in shader

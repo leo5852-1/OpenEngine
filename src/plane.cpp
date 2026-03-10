@@ -14,6 +14,9 @@ glm::vec4 planeVertices[4] = {
 
 //TODO: substitute programID param
 Plane::Plane(unsigned int programID){
+    isStatic = true;
+    setCollider(new BoxCollider(glm::vec3(1.0f, 0.1f, 1.0f)));
+
     this->modelLoc = glGetUniformLocation(programID, "model");
     
     colorPlane();
@@ -54,6 +57,7 @@ void Plane::translate(glm::vec3 matrix) {
 void Plane::scale(glm::vec3 matrix) {
     this->modelMatrix = glm::scale(this->modelMatrix, matrix);
     this->scaleSize *= matrix;
+    static_cast<BoxCollider*>(this->collider)->size = this->scaleSize;
 }
 
 void Plane::colorPlane(){
@@ -67,10 +71,4 @@ void Plane::colorPlane(){
     points[index] = planeVertices[0]; index++;
     points[index] = planeVertices[3]; index++;
     points[index] = planeVertices[2]; index++;
-}
-
-AABB Plane::getAABB(){
-    glm::vec3 min = position - (scaleSize / 2.0f);
-    glm::vec3 max = position + (scaleSize / 2.0f);
-    return { min, max };
 }

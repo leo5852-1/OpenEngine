@@ -1,16 +1,23 @@
 #ifndef COLLISIONSYSTEM_HPP
 #define COLLISIONSYSTEM_HPP
 
+#include <vector>
+#include <optional>
+#include "glm/glm.hpp"
 #include "gameObject.h"
+#include "boxCollider.h"
 
 class CollisionSystem {
 public:
-    static bool CheckCollsion(GameObject& a, GameObject& b);
-    static void ResolveCollsion(GameObject& a, GameObject& b);
+    void registerObject(GameObject* obj);
+    void update();
 
 private:
-    static bool CheckBoxVSBox(GameObject& a, GameObject& b);
-    static bool CheckBoxVSSphere(GameObject& a, GameObject& b);
+    std::vector<GameObject*> objects;
+
+    static std::optional<glm::vec3> getMTV(GameObject& a, GameObject& b);
+    static std::optional<glm::vec3> getBoxVSBoxMTV(BoxCollider& a, glm::vec3 posA,BoxCollider& b, glm::vec3 posB);
+    static std::optional<glm::vec3> getBoxVSSphereMTV(GameObject& a, GameObject& b);
 };
 
 #endif

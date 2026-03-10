@@ -8,9 +8,11 @@ class GameObject {
 public:
     glm::vec3 position;
     Collider* collider;
+    bool isStatic;
 
-    GameObject() : position(0.0f), collider(nullptr) {};
-    ~GameObject() {
+    GameObject() : position(0.0f), collider(nullptr), isStatic(false) {};
+    
+    virtual ~GameObject() {
         if(collider)
             delete collider;
     }
@@ -20,6 +22,10 @@ public:
         if(collider)
             delete collider;
         this->collider = c;
+    }
+
+    virtual void onCollision(glm::vec3 mtv) {
+        position += mtv;
     }
 };
 

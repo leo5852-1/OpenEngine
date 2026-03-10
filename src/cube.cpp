@@ -23,9 +23,12 @@ glm::vec4 vertex_colors[8] = {
     glm::vec4( 1.0, 1.0, 1.0, 1.0 )  // white
 };
 
-Cube::Cube(unsigned int programID){
-    this->modelLoc = glGetUniformLocation(programID, "model");
-    
+Cube::Cube(unsigned int programID, glm::vec3 size){
+
+    isStatic = true;
+    setCollider(new BoxCollider(size));
+
+    this->modelLoc = glGetUniformLocation(programID, "model");    
     colorcube();
     
     glGenVertexArrays(1, &vao);

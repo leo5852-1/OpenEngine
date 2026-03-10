@@ -1,14 +1,17 @@
 #ifndef CUBE_HPP
 #define CUBE_HPP
 
-#include <GL/glew.h>
+#include <GL/glew.h>    
 #include <glm/glm.hpp>
 #include <iostream>
 #include <glm/gtc/matrix_transform.hpp>
 
-class Cube {
+#include "gameObject.h"
+#include "boxCollider.h"
+
+class Cube: public GameObject {
 public:
-    Cube(unsigned int);
+    Cube(unsigned int programID, glm::vec3 size = glm::vec3(1.0f));
     void draw();
     void colorcube();
     void quad(int, int, int, int);

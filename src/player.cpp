@@ -1,49 +1,40 @@
 ﻿#include "player.h"
 
 Player::Player() {
-    ;
-}
+    isStatic = false;
+    setCollider(new BoxCollider(glm::vec3(0.6f, 1.0f, 0.6f)));
+    collider->offset = glm::vec3(0.0f, 0.5f, 0.0f);
+    position = glm::vec3(0.0f, 1.0f, 3.0f);
+}  
 
 Player::Player(glm::vec3 pos){
+    setCollider(new BoxCollider(glm::vec3(0.6f, 1.0f, 0.6f)));
     setPos(pos);
 }
 
 void Player::setPos(glm::vec3 pos){
-    this->cameraPos = pos;
+    position = pos;
+}
+ 
+void Player::update(float dt){ 
+    if (!isGrounded) {
+        verticalVelocity -= this->gravity * dt;
+        position.y += verticalVelocity * dt;
+    }
+
 }
 
-void Player::update(float dt, const std::vector<Plane>& worldObjects){
-    this->verticalVelocity -= this->gravity * dt;
-    float nextY = this->cameraPos.y + this->verticalVelocity * dt;
-    float groundLimit = 1.0f;
+void Player::onCollision(glm::vec3 mtv) {
+    position += mtv;
 
-    AABB playerBox;
-    playerBox.min = glm::vec3(cameraPos.x - 0.5f, nextY - 1.0f, cameraPos.z - 0.5f);
-    playerBox.max = glm::vec3(cameraPos.x + 0.5f, nextY, cameraPos.z + 0.5f);
-
-    bool hitGround = false;
-
-    for(const auto& obj : worldObjects) {
-        //check if obj's AABB collides with player's AABB
-        AABB planeBox = const_cast<Plane&>(obj).getAABB();
-        // if collision 
-        if (AABB::checkCollision(playerBox, planeBox)) {
-            // land on the ground
-            if (this->verticalVelocity < 0) {
-                this->verticalVelocity = 0.0f;
-                this->isGrounded = true;
-                
-                // prevent from passing through
-                this->cameraPos.y = planeBox.max.y + 1.0f; 
-                hitGround = true;
-            }
-            break;
-        }
+    if (mtv.y > 0.0f) {
+        // 위로 밀렸다 = 바닥에 착지
+        verticalVelocity = 0.0f;
+        isGrounded = true;
     }
-    if (!hitGround) {
-        // if no collsion: set nextY as the Y value
-        this->cameraPos.y = nextY;
-        this->isGrounded = false;
+    if (mtv.y < 0.0f) {
+        // 아래로 밀렸다 = 천장에 머리를 박음
+        verticalVelocity = 0.0f;
     }
 }
 
