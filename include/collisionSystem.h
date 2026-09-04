@@ -10,6 +10,7 @@
 class CollisionSystem {
 public:
     void registerObject(GameObject* obj);
+    void unregisterObject(GameObject* obj);
     void update();
 
 private:

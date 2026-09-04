@@ -28,64 +28,33 @@ Cube::Cube(unsigned int programID, glm::vec3 size){
     isStatic = true;
     setCollider(new BoxCollider(size));
 
-    this->modelLoc = glGetUniformLocation(programID, "model");    
-    colorcube();
-    
-    glGenVertexArrays(1, &vao);
-    glBindVertexArray(vao);
+    std::vector<glm::vec4> points;
+    std::vector<glm::vec4> colors;
+    points.reserve(36);
+    colors.reserve(36);
 
-    GLuint vbo;
-    glGenBuffers(1, &vbo);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    
-    glBufferData(GL_ARRAY_BUFFER, sizeof(points) + sizeof(colors), NULL, GL_STATIC_DRAW);
-    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(points), points);
-    glBufferSubData(GL_ARRAY_BUFFER, sizeof(points), sizeof(colors), colors);    
+    colorcube(points, colors);
 
-    GLuint vPositon = glGetAttribLocation(programID, "vPosition");
-    glEnableVertexAttribArray(vPositon);
-    glVertexAttribPointer(vPositon, 4, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0);
-
-    GLuint vColor = glGetAttribLocation(programID, "vColor");
-    glEnableVertexAttribArray(vColor);
-    glVertexAttribPointer(vColor, 4, GL_FLOAT, GL_FALSE, 0, ((GLvoid*)sizeof(points)) );
-}
-
-void Cube::draw(){
-    glUniformMatrix4fv(this->modelLoc, 1, GL_FALSE, &this->modelMatrix[0][0]);
-
-    glBindVertexArray(this->vao);
-    glDrawArrays(GL_TRIANGLES, 0, 36);
-    glBindVertexArray(0);
+    setupMesh(programID, points, colors);
 }
 
 // generate 12 triangles: 36 vertices and 36 colors
-void Cube::colorcube() {
-    index = 0;
-    quad( 1, 0, 3, 2 );
-    quad( 2, 3, 7, 6 );
-    quad( 3, 0, 4, 7 );
-    quad( 6, 5, 1, 2 );
-    quad( 4, 5, 6, 7 );
-    quad( 5, 4, 0, 1 );
+void Cube::colorcube(std::vector<glm::vec4>& points, std::vector<glm::vec4>& colors) {
+    quad( points, colors, 1, 0, 3, 2 );
+    quad( points, colors, 2, 3, 7, 6 );
+    quad( points, colors, 3, 0, 4, 7 );
+    quad( points, colors, 6, 5, 1, 2 );
+    quad( points, colors, 4, 5, 6, 7 );
+    quad( points, colors, 5, 4, 0, 1 );
 }
 
 // quad generates two triangles for each face and assigns colors
 //    to the vertices
-void Cube::quad( int a, int b, int c, int d ) {
-    colors[index] = vertex_colors[a]; points[index] = vertices[a]; index++;
-    colors[index] = vertex_colors[b]; points[index] = vertices[b]; index++;
-    colors[index] = vertex_colors[c]; points[index] = vertices[c]; index++;
-    colors[index] = vertex_colors[a]; points[index] = vertices[a]; index++;
-    colors[index] = vertex_colors[c]; points[index] = vertices[c]; index++;
-    colors[index] = vertex_colors[d]; points[index] = vertices[d]; index++;
-}
-
-void Cube::translate(glm::vec3 matrix) {
-    // 현재 모델 행렬에 이동 변환을 누적 적용
-    this->modelMatrix = glm::translate(this->modelMatrix, matrix);
-}
-
-void Cube::rotate(glm::vec3 matrix, float elapsedTime) {
-    this->modelMatrix = glm::rotate(this->modelMatrix, elapsedTime, matrix);
+void Cube::quad( std::vector<glm::vec4>& points, std::vector<glm::vec4>& colors, int a, int b, int c, int d ) {
+    colors.push_back(vertex_colors[a]); points.push_back(vertices[a]);
+    colors.push_back(vertex_colors[b]); points.push_back(vertices[b]);
+    colors.push_back(vertex_colors[c]); points.push_back(vertices[c]);
+    colors.push_back(vertex_colors[a]); points.push_back(vertices[a]);
+    colors.push_back(vertex_colors[c]); points.push_back(vertices[c]);
+    colors.push_back(vertex_colors[d]); points.push_back(vertices[d]);
 }

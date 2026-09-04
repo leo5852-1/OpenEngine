@@ -17,58 +17,27 @@ Plane::Plane(unsigned int programID){
     isStatic = true;
     setCollider(new BoxCollider(glm::vec3(1.0f, 0.1f, 1.0f)));
 
-    this->modelLoc = glGetUniformLocation(programID, "model");
-    
-    colorPlane();
-    
-    glGenVertexArrays(1, &vao);
-    glBindVertexArray(vao);
+    std::vector<glm::vec4> points;
+    std::vector<glm::vec4> colors;
+    points.reserve(6);
+    colors.reserve(6);
 
-    GLuint vbo;
-    glGenBuffers(1, &vbo);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    
-    glBufferData(GL_ARRAY_BUFFER, sizeof(points) + sizeof(colors), NULL, GL_STATIC_DRAW);
-    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(points), points);
-    glBufferSubData(GL_ARRAY_BUFFER, sizeof(points), sizeof(colors), colors);    
+    colorPlane(points, colors);
 
-    GLuint vPositon = glGetAttribLocation(programID, "vPosition");
-    glEnableVertexAttribArray(vPositon);
-    glVertexAttribPointer(vPositon, 4, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0);
-
-    GLuint vColor = glGetAttribLocation(programID, "vColor");
-    glEnableVertexAttribArray(vColor);
-    glVertexAttribPointer(vColor, 4, GL_FLOAT, GL_FALSE, 0, ((GLvoid*)sizeof(points)) );
+    setupMesh(programID, points, colors);
 }
 
-void Plane::draw(){
-    glUniformMatrix4fv(this->modelLoc, 1, GL_FALSE, &this->modelMatrix[0][0]);
-
-    glBindVertexArray(this->vao);
-    glDrawArrays(GL_TRIANGLES, 0, 6);
-    glBindVertexArray(0);
+void Plane::scale(glm::vec3 factor) {
+    this->modelMatrix = glm::scale(this->modelMatrix, factor);
+    static_cast<BoxCollider*>(this->collider)->size *= factor;
 }
 
-void Plane::translate(glm::vec3 matrix) {
-    this->modelMatrix = glm::translate(this->modelMatrix, matrix);
-    this->position += matrix;
-}
+void Plane::colorPlane(std::vector<glm::vec4>& points, std::vector<glm::vec4>& colors) {
+    glm::vec4 grassGreen(0.13f, 0.55f, 0.13f, 1.0f);
 
-void Plane::scale(glm::vec3 matrix) {
-    this->modelMatrix = glm::scale(this->modelMatrix, matrix);
-    this->scaleSize *= matrix;
-    static_cast<BoxCollider*>(this->collider)->size = this->scaleSize;
-}
-
-void Plane::colorPlane(){
-    for(int i=0; i<6; i++){
-        colors[i] = glm::vec4(0.13f, 0.55f, 0.13f, 1.0f);  // grass green
+    int order[6] = { 0, 2, 1, 0, 3, 2 };
+    for (int i : order) {
+        points.push_back(planeVertices[i]);
+        colors.push_back(grassGreen);
     }
-    int index = 0;
-    points[index] = planeVertices[0]; index++;
-    points[index] = planeVertices[2]; index++;
-    points[index] = planeVertices[1]; index++;
-    points[index] = planeVertices[0]; index++;
-    points[index] = planeVertices[3]; index++;
-    points[index] = planeVertices[2]; index++;
 }

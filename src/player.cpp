@@ -8,7 +8,9 @@ Player::Player() {
 }  
 
 Player::Player(glm::vec3 pos){
+    isStatic = false;
     setCollider(new BoxCollider(glm::vec3(0.6f, 1.0f, 0.6f)));
+    collider->offset = glm::vec3(0.0f, 0.5f, 0.0f);
     setPos(pos);
 }
 
@@ -43,4 +45,10 @@ void Player::jump() {
         this->verticalVelocity = 4.0f;
         this->isGrounded = false;
     }
+
+}
+
+void Player::translate(glm::vec3 vec){
+    //this->modelMatrix = glm::translate(this->modelMatrix, vec);
+    this->position += vec;
 }

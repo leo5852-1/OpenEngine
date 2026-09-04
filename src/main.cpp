@@ -41,10 +41,6 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 
-
-void quad( int a, int b, int c, int d );
-void colorcube();
-
 //////// Global variables ////////
 // screen size
 const unsigned int SCR_WIDTH = 1280;
@@ -147,10 +143,7 @@ int main() {
         glUniformMatrix4fv(glGetUniformLocation(shader.programID, "projection"), 1, GL_FALSE, &projectMat[0][0]);
 
         // 6. the actual drawing part
-        cube1.rotate(glm::vec3(0.5f, 1.0f, 0.0f), deltaTime);
         cube1.draw();
-        
-        cube2.rotate(glm::vec3(0.5f, 1.0f, 0.0f), deltaTime);
         cube2.draw();
 
         floor.draw();

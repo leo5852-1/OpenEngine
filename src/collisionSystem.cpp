@@ -1,8 +1,17 @@
 #include "collisionSystem.h"
 #include <algorithm>
+#include <iostream>
 
 void CollisionSystem::registerObject(GameObject* obj){
+    if (!obj->collider) {
+        std::cout << "CollisionSystem::registerObject - collider가 없는 오브젝트는 등록할 수 없습니다.\n";
+        return;
+    }
     this->objects.push_back(obj);
+}
+
+void CollisionSystem::unregisterObject(GameObject* obj){
+    this->objects.erase(std::remove(this->objects.begin(), this->objects.end(), obj), this->objects.end());
 }
 
 void CollisionSystem::update(){
@@ -10,9 +19,6 @@ void CollisionSystem::update(){
         for (size_t j = i + 1; j < objects.size(); j++) {
             GameObject* a = objects[i];
             GameObject* b = objects[j];
-
-            // collider가 없는 물체는 스킵
-            if (!a->collider || !b->collider) continue;
 
             // static끼리는 검사 불필요
             if (a->isStatic && b->isStatic) continue;
