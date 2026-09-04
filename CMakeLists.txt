@@ -42,6 +42,7 @@ add_executable (OpenEngine
 
   include/player.h
   include/renderableObject.h
+  include/scene.h
   include/cube.h
   include/plane.h
   # include/aabb.h

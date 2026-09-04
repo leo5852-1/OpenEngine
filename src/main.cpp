@@ -16,6 +16,7 @@
 #include <cube.h>
 #include <plane.h>
 #include <collisionSystem.h>
+#include <scene.h>
 
 #define BORDER_LEFT 0
 #define BORDER_RIGHT 1280
@@ -97,20 +98,20 @@ int main() {
 
     init();
 
-    // Generate Game Objects
-    Cube cube1(shader.programID);
-    
-    Cube cube2(shader.programID);
+    //======================= Generate Game Objects =======================
+    Scene scene(collisionSystem);
+
+    scene.spawn<Cube>(shader.programID);
+
+    Cube& cube2 = scene.spawn<Cube>(shader.programID);
     cube2.translate(glm::vec3(1.5f, 0.0f, 0.0f));
 
-    Plane floor(shader.programID);
+    Plane& floor = scene.spawn<Plane>(shader.programID);
     floor.scale(glm::vec3(30.0f, 1.0f, 30.0f));
     floor.translate(glm::vec3(0.0f, -1.0f, 0.0f));
     
-    collisionSystem.registerObject(&player);
-    collisionSystem.registerObject(&floor);
-    collisionSystem.registerObject(&cube1);
-    collisionSystem.registerObject(&cube2);
+    collisionSystem.registerObject(&player); //player는 별개로 취급
+    //=====================================================================
 
     // The main loop
     while(!glfwWindowShouldClose(window))
@@ -143,10 +144,7 @@ int main() {
         glUniformMatrix4fv(glGetUniformLocation(shader.programID, "projection"), 1, GL_FALSE, &projectMat[0][0]);
 
         // 6. the actual drawing part
-        cube1.draw();
-        cube2.draw();
-
-        floor.draw();
+        scene.draw();
 
         glfwPollEvents();
         glfwSwapBuffers(window);

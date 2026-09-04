@@ -1,4 +1,4 @@
-#ifndef RENDERABLEOBJECT_HPP
+﻿#ifndef RENDERABLEOBJECT_HPP
 #define RENDERABLEOBJECT_HPP
 
 #include <GL/glew.h>

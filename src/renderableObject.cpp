@@ -1,4 +1,4 @@
-#include "renderableObject.h"
+﻿#include "renderableObject.h"
 
 RenderableObject::~RenderableObject() {
     if (vbo) glDeleteBuffers(1, &vbo);
