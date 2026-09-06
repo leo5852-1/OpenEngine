@@ -8,8 +8,8 @@
 
 #include "gameObject.h"
 
-// GameObject에 실제로 화면에 그려지는 메시(vao/vbo/모델행렬)를 더한 클래스.
-// Cube, Plane처럼 렌더링되는 오브젝트는 이 클래스를 상속받는다.
+// GameObject에 실제로 화면에 그려지는 메시(vao/vbo/모델행렬)를 더한 class
+// Cube, Plane처럼 렌더링되는 오브젝트는 이 클래스를 상속받음
 class RenderableObject : public GameObject {
 public:
     virtual ~RenderableObject();
@@ -18,7 +18,9 @@ public:
     void translate(glm::vec3 vec);
     void rotate(glm::vec3 axis, float elapsedTime);
 
-    glm::mat4 modelMatrix = glm::mat4(1.0f);
+    // localMatrix는 rotation/scale만 반영하고, position은 따로 유지 
+    // 최종 Model Matrix은 draw()에서 translate(position) * localMatrix로 조립한다.
+    glm::mat4 localMatrix = glm::mat4(1.0f);
 
 protected:
     // interleaved position+color 정점 데이터를 업로드하고 vao/vbo/attrib를 설정한다.

@@ -1,4 +1,4 @@
-#ifndef SCENE_HPP
+﻿#ifndef SCENE_HPP
 #define SCENE_HPP
 
 #include <vector>
@@ -41,6 +41,12 @@ public:
         objects.erase(std::remove_if(objects.begin(), objects.end(),
             [obj](const std::unique_ptr<RenderableObject>& owned) { return owned.get() == obj; }),
             objects.end());
+    }
+
+    void update(float dt) {
+        for (auto& obj : objects) {
+            obj->update(dt);
+        }
     }
 
     void draw() {

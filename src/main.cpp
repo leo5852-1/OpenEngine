@@ -109,9 +109,20 @@ int main() {
     Plane& floor = scene.spawn<Plane>(shader.programID);
     floor.scale(glm::vec3(30.0f, 1.0f, 30.0f));
     floor.translate(glm::vec3(0.0f, -1.0f, 0.0f));
-    
+
+    // 중력이 적용되는 dynamic 오브젝트 예시: 공중에서 떨어져 바닥에 착지한다
+    Cube& fallingCube = scene.spawn<Cube>(shader.programID);
+    fallingCube.isStatic = false;
+    fallingCube.useGravity = true;
+    fallingCube.translate(glm::vec3(-2.0f, 5.0f, 0.0f));
+
     collisionSystem.registerObject(&player); //player는 별개로 취급
     //=====================================================================
+
+    // lastFrame이 0으로 초기화된 채면, 셰이더 컴파일/오브젝트 생성 등 여기까지 걸린 시간이
+    // 전부 첫 프레임의 deltaTime으로 들어가서 중력이 한 번에 크게 튀는 문제가 있었다.
+    // 루프 진입 직전에 다시 맞춰준다.
+    lastFrame = (float)glfwGetTime();
 
     // The main loop
     while(!glfwWindowShouldClose(window))
@@ -121,11 +132,17 @@ int main() {
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
 
+        // 창을 드래그하거나 브레이크포인트 등으로 프레임이 멈췄다 재개되는 경우를 대비해
+        // 한 프레임에 물리가 너무 크게 튀지 않도록 delta time 상한을 둔다.
+        const float MAX_DELTA_TIME = 0.1f;
+        if (deltaTime > MAX_DELTA_TIME) deltaTime = MAX_DELTA_TIME;
+
         // 1. proccess inputs
         processInput(window);
         
         // 2. calculate physics and collisions
         player.update(deltaTime);
+        scene.update(deltaTime);
         collisionSystem.update();
         
         // 3. calculate view matrix

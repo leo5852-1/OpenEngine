@@ -33,7 +33,9 @@ void RenderableObject::setupMesh(unsigned int programID, const std::vector<glm::
 }
 
 void RenderableObject::draw() {
-    glUniformMatrix4fv(this->modelLoc, 1, GL_FALSE, &this->modelMatrix[0][0]);
+    // 이동은 position에서, 회전/크기는 localMatrix에서 가져와 매 프레임 조립
+    glm::mat4 model = glm::translate(glm::mat4(1.0f), this->position) * this->localMatrix;
+    glUniformMatrix4fv(this->modelLoc, 1, GL_FALSE, &model[0][0]);
 
     glBindVertexArray(this->vao);
     glDrawArrays(GL_TRIANGLES, 0, this->vertexCount);
@@ -41,11 +43,9 @@ void RenderableObject::draw() {
 }
 
 void RenderableObject::translate(glm::vec3 vec) {
-    // 현재 모델 행렬에 이동 변환을 누적 적용
-    this->modelMatrix = glm::translate(this->modelMatrix, vec);
     this->position += vec;
 }
 
 void RenderableObject::rotate(glm::vec3 axis, float elapsedTime) {
-    this->modelMatrix = glm::rotate(this->modelMatrix, elapsedTime, axis);
+    this->localMatrix = glm::rotate(this->localMatrix, elapsedTime, axis);
 }
