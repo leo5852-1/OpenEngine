@@ -34,13 +34,24 @@ add_executable (OpenEngine
   dependencies/glew-2.1.0/src/glew.c
   src/main.cpp
   src/player.cpp
+  src/renderableObject.cpp
   src/cube.cpp
   src/plane.cpp
+  src/collisionSystem.cpp
+  src/wireframe.cpp
 
   include/player.h
+  include/renderableObject.h
+  include/scene.h
   include/cube.h
   include/plane.h
-  include/aabb.h
+  # include/aabb.h
+  include/collider.h
+  include/boxCollider.h
+  include/sphereCollider.h
+  include/collisionSystem.h
+  include/gameObject.h
+  include/wireframe.h
   )
 
 # link libraries

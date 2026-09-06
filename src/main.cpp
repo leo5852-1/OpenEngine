@@ -15,6 +15,8 @@
 #include <shader.h>
 #include <cube.h>
 #include <plane.h>
+#include <collisionSystem.h>
+#include <scene.h>
 
 #define BORDER_LEFT 0
 #define BORDER_RIGHT 1280
@@ -40,10 +42,6 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 
-
-void quad( int a, int b, int c, int d );
-void colorcube();
-
 //////// Global variables ////////
 // screen size
 const unsigned int SCR_WIDTH = 1280;
@@ -53,11 +51,10 @@ const unsigned int SCR_HEIGHT = 720;
 Shader shader;
 // Vertex array object
 GLuint vao;
-
-// List of world objects
-static std::vector<Plane> worldObjects;
 // Player
 Player player;
+// Collision system
+CollisionSystem collisionSystem;
 // Matrix transformation
 //GLuint pvmMatrixID; //removed to calculate in shader
 glm::mat4 modelMat;
@@ -101,16 +98,32 @@ int main() {
 
     init();
 
-    Cube cube1(shader.programID);
-    
-    Cube cube2(shader.programID);
+    //======================= Generate Game Objects =======================
+    Scene scene(collisionSystem);
+
+    scene.spawn<Cube>(shader.programID);
+
+    Cube& cube2 = scene.spawn<Cube>(shader.programID);
     cube2.translate(glm::vec3(1.5f, 0.0f, 0.0f));
 
-    Plane floor(shader.programID);
+    Plane& floor = scene.spawn<Plane>(shader.programID);
     floor.scale(glm::vec3(30.0f, 1.0f, 30.0f));
     floor.translate(glm::vec3(0.0f, -1.0f, 0.0f));
-    worldObjects.push_back(floor);
-    
+
+    // 중력이 적용되는 dynamic 오브젝트 예시: 공중에서 떨어져 바닥에 착지한다
+    Cube& fallingCube = scene.spawn<Cube>(shader.programID);
+    fallingCube.isStatic = false;
+    fallingCube.useGravity = true;
+    fallingCube.translate(glm::vec3(-2.0f, 5.0f, 0.0f));
+
+    collisionSystem.registerObject(&player); //player는 별개로 취급
+    //=====================================================================
+
+    // lastFrame이 0으로 초기화된 채면, 셰이더 컴파일/오브젝트 생성 등 여기까지 걸린 시간이
+    // 전부 첫 프레임의 deltaTime으로 들어가서 중력이 한 번에 크게 튀는 문제가 있었다.
+    // 루프 진입 직전에 다시 맞춰준다.
+    lastFrame = (float)glfwGetTime();
+
     // The main loop
     while(!glfwWindowShouldClose(window))
     {
@@ -119,33 +132,36 @@ int main() {
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
 
-        //proccess inputs
+        // 창을 드래그하거나 브레이크포인트 등으로 프레임이 멈췄다 재개되는 경우를 대비해
+        // 한 프레임에 물리가 너무 크게 튀지 않도록 delta time 상한을 둔다.
+        const float MAX_DELTA_TIME = 0.1f;
+        if (deltaTime > MAX_DELTA_TIME) deltaTime = MAX_DELTA_TIME;
+
+        // 1. proccess inputs
         processInput(window);
-        // clear the frame and buffer
+        
+        // 2. calculate physics and collisions
+        player.update(deltaTime);
+        scene.update(deltaTime);
+        collisionSystem.update();
+        
+        // 3. calculate view matrix
+        viewMat = glm::lookAt(player.position + player.cameraOffset, 
+            player.position + player.cameraOffset + player.cameraFront, 
+            player.cameraUp);
+            
+        // 4. clear the frame and buffer
         glClearColor(CLEAR_COLOR);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-        // calculate view matrix
-        viewMat = glm::lookAt(player.cameraPos, player.cameraPos + player.cameraFront, player.cameraUp);
-        // rotate cube
-        modelMat = glm::mat4(1.0f);
-        modelMat = glm::rotate(modelMat, (float)glfwGetTime(), glm::vec3(0.5f, 1.0f, 0.0f)); 
-        
-        // set MVP matrices
+            
+        // 5. set MVP matrices
+        // TODO: use fixed location for MVP uniforms and delete these lines
         glUniformMatrix4fv(glGetUniformLocation(shader.programID, "model"), 1, GL_FALSE, &modelMat[0][0]);
         glUniformMatrix4fv(glGetUniformLocation(shader.programID, "view"), 1, GL_FALSE, &viewMat[0][0]);
         glUniformMatrix4fv(glGetUniformLocation(shader.programID, "projection"), 1, GL_FALSE, &projectMat[0][0]);
 
-        //mainLoopEvent();
-        player.update(deltaTime, worldObjects);
-
-        cube1.rotate(glm::vec3(0.5f, 1.0f, 0.0f), deltaTime);
-        cube1.draw();
-        
-        cube2.rotate(glm::vec3(0.5f, 1.0f, 0.0f), deltaTime);
-        cube2.draw();
-
-        floor.draw();
+        // 6. the actual drawing part
+        scene.draw();
 
         glfwPollEvents();
         glfwSwapBuffers(window);
@@ -162,7 +178,9 @@ void init(){
 
     // initialize MVP matrices
     projectMat = glm::perspective(glm::radians(65.0f), 1.0f, 0.1f, 100.0f);
-    viewMat = glm::lookAt(player.cameraPos, player.cameraPos + player.cameraFront, player.cameraUp);
+    viewMat = glm::lookAt(player.position + player.cameraOffset, 
+            player.position + player.cameraOffset + player.cameraFront, 
+            player.cameraUp);
     modelMat = glm::mat4(1.0f);
     
     framebuffer_size_callback(NULL, SCR_WIDTH, SCR_HEIGHT);
@@ -189,16 +207,16 @@ void processInput(GLFWwindow* window){
 
     // W
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-        player.cameraPos += cameraSpeed * flatFront;
+        player.position += cameraSpeed * flatFront;
     // S
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-        player.cameraPos -= cameraSpeed * flatFront;
+        player.position -= cameraSpeed * flatFront;
     // A
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-        player.cameraPos -= cameraSpeed * glm::normalize(glm::cross(flatFront, player.cameraUp));
+        player.position -= cameraSpeed * glm::normalize(glm::cross(flatFront, player.cameraUp));
     // D
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-        player.cameraPos += cameraSpeed * glm::normalize(glm::cross(flatFront, player.cameraUp));
+        player.position += cameraSpeed * glm::normalize(glm::cross(flatFront, player.cameraUp));
     // Q
     if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
         player.cameraFront = glm::rotate(flatFront, rotateSpeed, player.cameraUp);

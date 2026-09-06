@@ -1,4 +1,4 @@
-#include "plane.h"
+﻿#include "plane.h"
 
 glm::vec4 planeVertices[4] = {
     glm::vec4(-0.5f, 0.0f, -0.5f, 1.0f), // 0
@@ -14,63 +14,34 @@ glm::vec4 planeVertices[4] = {
 
 //TODO: substitute programID param
 Plane::Plane(unsigned int programID){
-    this->modelLoc = glGetUniformLocation(programID, "model");
-    
-    colorPlane();
-    
-    glGenVertexArrays(1, &vao);
-    glBindVertexArray(vao);
+    isStatic = true;
+    // 콜라이더 두께를 1.0으로 잡되, offset을 -size.y/2만큼 내려서
+    // 콜라이더의 윗면은 항상 렌더링되는 평면(position.y)과 정확히 맞닿게 한다.
+    // (얇은 콜라이더는 빠르게 낙하하는 오브젝트가 한 프레임에 뚫고 지나갈 수 있음)
+    setCollider(new BoxCollider(glm::vec3(1.0f, 1.0f, 1.0f)));
+    collider->offset = glm::vec3(0.0f, -0.5f, 0.0f);
 
-    GLuint vbo;
-    glGenBuffers(1, &vbo);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    
-    glBufferData(GL_ARRAY_BUFFER, sizeof(points) + sizeof(colors), NULL, GL_STATIC_DRAW);
-    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(points), points);
-    glBufferSubData(GL_ARRAY_BUFFER, sizeof(points), sizeof(colors), colors);    
+    std::vector<glm::vec4> points;
+    std::vector<glm::vec4> colors;
+    points.reserve(6);
+    colors.reserve(6);
 
-    GLuint vPositon = glGetAttribLocation(programID, "vPosition");
-    glEnableVertexAttribArray(vPositon);
-    glVertexAttribPointer(vPositon, 4, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0);
+    colorPlane(points, colors);
 
-    GLuint vColor = glGetAttribLocation(programID, "vColor");
-    glEnableVertexAttribArray(vColor);
-    glVertexAttribPointer(vColor, 4, GL_FLOAT, GL_FALSE, 0, ((GLvoid*)sizeof(points)) );
+    setupMesh(programID, points, colors);
 }
 
-void Plane::draw(){
-    glUniformMatrix4fv(this->modelLoc, 1, GL_FALSE, &this->modelMatrix[0][0]);
-
-    glBindVertexArray(this->vao);
-    glDrawArrays(GL_TRIANGLES, 0, 6);
-    glBindVertexArray(0);
+void Plane::scale(glm::vec3 factor) {
+    this->localMatrix = glm::scale(this->localMatrix, factor);
+    static_cast<BoxCollider*>(this->collider)->size *= factor;
 }
 
-void Plane::translate(glm::vec3 matrix) {
-    this->modelMatrix = glm::translate(this->modelMatrix, matrix);
-    this->position += matrix;
-}
+void Plane::colorPlane(std::vector<glm::vec4>& points, std::vector<glm::vec4>& colors) {
+    glm::vec4 grassGreen(0.13f, 0.55f, 0.13f, 1.0f);
 
-void Plane::scale(glm::vec3 matrix) {
-    this->modelMatrix = glm::scale(this->modelMatrix, matrix);
-    this->scaleSize *= matrix;
-}
-
-void Plane::colorPlane(){
-    for(int i=0; i<6; i++){
-        colors[i] = glm::vec4(0.13f, 0.55f, 0.13f, 1.0f);  // grass green
+    int order[6] = { 0, 2, 1, 0, 3, 2 };
+    for (int i : order) {
+        points.push_back(planeVertices[i]);
+        colors.push_back(grassGreen);
     }
-    int index = 0;
-    points[index] = planeVertices[0]; index++;
-    points[index] = planeVertices[2]; index++;
-    points[index] = planeVertices[1]; index++;
-    points[index] = planeVertices[0]; index++;
-    points[index] = planeVertices[3]; index++;
-    points[index] = planeVertices[2]; index++;
-}
-
-AABB Plane::getAABB(){
-    glm::vec3 min = position - (scaleSize / 2.0f);
-    glm::vec3 max = position + (scaleSize / 2.0f);
-    return { min, max };
 }

@@ -8,9 +8,6 @@
 #include <fstream>
 #include <sstream>
 
-
-using namespace std;
-
 class Shader 
 {
 public:
@@ -22,33 +19,32 @@ public:
         // 1. Create shader object
         GLuint vShaderID = glCreateShader(GL_VERTEX_SHADER);
         GLuint fShaderID = glCreateShader(GL_FRAGMENT_SHADER);
-        
         // 2. read shader source codes from file
-        string vShaderCode;
-        ifstream vStream(vertexPath);
+        std::string vShaderCode;
+        std::ifstream vStream(vertexPath);
         if(vStream.is_open()){
-            stringstream sstr;
+            std::stringstream sstr;
             sstr << vStream.rdbuf();
             vShaderCode = sstr.str();
             vStream.close();
         }
         else{
-            cout << "ERROR: Can't open file name \"" << vertexPath << "\"";
+            std::cout << "ERROR: Can't open file name \"" << vertexPath << "\"";
             return;
         }
         char const* vShaderCodePtr = vShaderCode.c_str();
         //cout << "-- vertex shader code --\n" << vShaderCode << endl;
 
-        string fShaderCode;
-        ifstream fStream(fragmentPath);
+        std::string fShaderCode;
+        std::ifstream fStream(fragmentPath);
         if(fStream.is_open()){
-            stringstream sstr;
+            std::stringstream sstr;
             sstr << fStream.rdbuf();
             fShaderCode = sstr.str();
             fStream.close();
         }
         else{
-            cout << "ERROR: Can't open file name \"" << fragmentPath << "\"";
+            std::cout << "ERROR: Can't open file name \"" << fragmentPath << "\"";
             return;
         }
         char const* fShaderCodePtr = fShaderCode.c_str();
@@ -66,7 +62,7 @@ public:
             glGetShaderiv(vShaderID, GL_INFO_LOG_LENGTH, &infoLogLength);
             vector<char> vShaderErrorMsg(infoLogLength+1);
             glGetShaderInfoLog(vShaderID, infoLogLength, NULL, &vShaderErrorMsg[0]);
-            cout << "Shader Compile Error:\n" << &vShaderErrorMsg[0] << endl;
+            std::cout << "Shader Compile Error:\n" << &vShaderErrorMsg[0] << std::endl;
         }
         else
             printf("Compile success\n");
@@ -83,7 +79,7 @@ public:
             glGetShaderiv(fShaderID, GL_INFO_LOG_LENGTH, &infoLogLength);
             vector<char> fShaderErrorMsg(infoLogLength+1);
             glGetShaderInfoLog(fShaderID, infoLogLength, NULL, &fShaderErrorMsg[0]);
-            cout << "Shader Compile Error:\n" << &fShaderErrorMsg[0] << endl;
+            std::cout << "Shader Compile Error:\n" << &fShaderErrorMsg[0] << std::endl;
         }
         else
             printf("Compile success\n");
@@ -100,7 +96,7 @@ public:
             if (infoLogLength > 0){
                 vector<char> ProgramErrorMessage(infoLogLength+1);
                 glGetProgramInfoLog(programID, infoLogLength, NULL, &ProgramErrorMessage[0]);
-                cout << "\nLink Error: " << &ProgramErrorMessage[0] << endl;
+                std::cout << "\nLink Error: " << &ProgramErrorMessage[0] << std::endl;
             }
         }
 
